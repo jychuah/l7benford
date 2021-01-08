@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  benford:
+    build: ./benford/
+    volumes:
+      - ./benford:/app
+    container_name: l7_benford
+    env_file:
+      - l7.env
+  postgres:
+    image: postgres
+    volumes:
+      - ./postgres/fixtures.sql:/docker-entrypoint-initdb.d/10-init.sql
+      - ./postgres/dump:/dump
+    container_name: l7_postgres
+    env_file:
+      - l7.env
