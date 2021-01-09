@@ -1,12 +1,10 @@
 version: "3.8"
 services:
-  benford:
-    build: ./benford/
+  client:
+    build: ./client/
+    container_name: l7_client
     volumes:
-      - ./benford:/app
-    container_name: l7_benford
-    env_file:
-      - l7.env
+      - webapp:/build
   postgres:
     image: postgres
     volumes:
@@ -15,3 +13,18 @@ services:
     container_name: l7_postgres
     env_file:
       - l7.env
+  server:
+    depends_on:
+      - client
+      - postgres
+    build: ./server/
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server:/app
+      - webapp:/app/dist
+    container_name: l7_server
+    env_file:
+      - l7.env
+volumes:
+  webapp:
