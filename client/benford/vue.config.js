@@ -1,3 +1,3 @@
 module.exports = {
-  assetsDir: '../static/'
+  assetsDir: process.env.VUE_APP_MODE === 'development' ? '../static/' : './'
 }

@@ -5,7 +5,10 @@ services:
     container_name: l7_client
     volumes:
       - webapp:/build
-    command: yarn build --target app --dest /build/static
+      - ./client/benford:/src
+    command: yarn serve 
+    ports:
+      - "8080:8080"
   postgres:
     image: postgres
     volumes:
@@ -25,6 +28,7 @@ services:
       - ./server:/app
       - webapp:/app/dist
     container_name: l7_server
+    command: ["gunicorn", "-w 1", "-b :8000", "wsgi:app", "--reload"]
     env_file:
       - l7.env
 volumes:

@@ -6,5 +6,6 @@ app.config.from_object(__name__)
 
 @app.route('/', methods=['GET'])
 def index():
+    print("Hello world")
     return render_template("index.html")
 
