@@ -1,10 +1,12 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS, cross_origin
 import psycopg2
 import os
 import pandas as pd
 import io
 import functools
+import json
+from retry import retry
 
 # instantiate the app
 app = Flask(__name__, static_folder="./dist/static", template_folder="./dist/static")
@@ -18,15 +20,23 @@ POSTGRES_USER = os.environ.get('POSTGRES_USER', 'benford')
 POSTGRES_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'benford')
 POSTGRES_DB = os.environ.get('POSTGRES_DB', 'benford')
 POSTGRES_HOST = "l7_postgres"
-conn = psycopg2.connect(
-    "dbname={db} user={user} password={password} host={host}".format(
-        db=POSTGRES_DB,
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD,
-        host=POSTGRES_HOST
+
+@retry(tries=3, delay=10)
+def make_connection():
+    conn = psycopg2.connect(
+        "dbname={db} user={user} password={password} host={host}".format(
+            db=POSTGRES_DB,
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            host=POSTGRES_HOST
+        )
     )
-)
-cursor = conn.cursor()
+    cursor = conn.cursor()
+    return conn, cursor
+
+conn, cursor = make_connection()
+print("Connected to {postgres}".format(postgres=POSTGRES_HOST))
+
 
 def make_histograms(df):
     result = {}
@@ -37,12 +47,18 @@ def make_histograms(df):
         }
         total = functools.reduce(lambda v, e: v + e, histogram.values(), 0)
         for digit in histogram.keys():
-            histogram[digit] /= total
+            if total == 0:
+                histogram[digit] = 0
+            else:
+                histogram[digit] /= total
+        print("COLUMN", column)
         result[column] = histogram
     return result
 
+
 def parse_file(contents, delimiter='\t'):
     return pd.read_csv(io.StringIO(contents), delimiter=delimiter)
+
 
 @app.route("/api/upload/", methods=["POST"])
 def upload():
@@ -52,21 +68,22 @@ def upload():
     try:
         filename = blob.filename
         contents = blob.stream.read()
+        print(type(contents))
         try:
-            filetype, data = parse_file(contents)
+            df = parse_file(contents.decode('utf-8'))
+            histogram = make_histograms(df)
         except:
             raise Exception("Parsing error")
         binary = psycopg2.Binary(contents).getquoted()
-        sql = "INSERT INTO benford (filename, contents) VALUES (%s, %s)"
-        cursor.execute(sql, [filename, binary])
+        sql = "INSERT INTO benford (filename, contents, metadata) VALUES (%s, %s, %s)"
+        cursor.execute(sql, [filename, binary, json.dumps(histogram)])
         conn.commit()
     except:
         raise Exception("DB Error")
-    return "OK"
+    return jsonify(histogram)
 
 
 @app.route('/', methods=['GET'])
 def index():
-    print("Hello world")
     return render_template("index.html")
 
