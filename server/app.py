@@ -2,6 +2,9 @@ from flask import Flask, request, render_template
 from flask_cors import CORS, cross_origin
 import psycopg2
 import os
+import pandas as pd
+import io
+import functools
 
 # instantiate the app
 app = Flask(__name__, static_folder="./dist/static", template_folder="./dist/static")
@@ -25,6 +28,22 @@ conn = psycopg2.connect(
 )
 cursor = conn.cursor()
 
+def make_histograms(df):
+    result = {}
+    for column in df.columns:
+        reduced = functools.reduce(lambda v, e: v + str(e), df[column].values, '')
+        histogram = {
+            digit: reduced.count(str(digit)) for digit in range(10) 
+        }
+        total = functools.reduce(lambda v, e: v + e, histogram.values(), 0)
+        for digit in histogram.keys():
+            histogram[digit] /= total
+        result[column] = histogram
+    return result
+
+def parse_file(contents, delimiter='\t'):
+    return pd.read_csv(io.StringIO(contents), delimiter=delimiter)
+
 @app.route("/api/upload/", methods=["POST"])
 def upload():
     if not request.files or 'file' not in request.files:
@@ -32,7 +51,12 @@ def upload():
     blob = request.files["file"]
     try:
         filename = blob.filename
-        binary = psycopg2.Binary(blob.stream.read()).getquoted()
+        contents = blob.stream.read()
+        try:
+            filetype, data = parse_file(contents)
+        except:
+            raise Exception("Parsing error")
+        binary = psycopg2.Binary(contents).getquoted()
         sql = "INSERT INTO benford (filename, contents) VALUES (%s, %s)"
         cursor.execute(sql, [filename, binary])
         conn.commit()
