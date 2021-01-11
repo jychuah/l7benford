@@ -68,14 +68,33 @@ def files():
     return jsonify(results)
 
 
+def get_file(filename):
+    sql = "SELECT contents FROM benford WHERE filename=%s;"
+    cursor.execute(sql, [filename])
+    result = cursor.fetchone()
+    return result[0].tobytes()
+
+
 @app.route("/api/reparse/", methods=["POST"])
 def reparse():
     data = request.get_json()
-    if 'filename' not in data or 'delimiter' in data:
+    if 'filename' not in data or 'delimiter' not in data:
         raise Exception("Bad post")
-    sql = "SELECT contents FROM benford WHERE filename=%s;"
-    cursor.execute(sql, [data['filename']])
-    result = cursor.fetchall()
+    if data['delimiter'] == 'tab':
+        delimiter = '\t'
+    elif data['delimiter'] == 'comma':
+        delimiter = ','
+    contents = get_file(data['filename'])
+    df = parse_file(contents.decode('utf-8'), delimiter=delimiter)
+    histogram = make_histograms(df)
+    metadata = {
+        'delimiter': delimiter,
+        'histogram': histogram
+    }
+    sql = "UPDATE benford SET metadata=%s WHERE filename=%s"
+    cursor.execute(sql, [json.dumps(metadata), data['filename']])
+    conn.commit()
+    return jsonify(metadata)
 
 
 @app.route("/api/upload/", methods=["POST"])
@@ -95,7 +114,7 @@ def upload():
             }
         except:
             raise Exception("Parsing error")
-        binary = psycopg2.Binary(contents).getquoted()
+        binary = psycopg2.Binary(contents)
         sql = "INSERT INTO benford (filename, contents, metadata) VALUES (%s, %s, %s);"
         cursor.execute(sql, [filename, binary, json.dumps(metadata)])
         conn.commit()

@@ -95,14 +95,14 @@ export default new Vuex.Store({
         commit('UPLOAD_SUCCESS', { filename, metadata });
         commit('SELECT', { filename, field })
       }).catch(error => {
-        console.log("ERROR", error);
         commit('UPLOAD_ERROR', error);
       });
     },
-    reparse({ commit }, { filename, delimiter }) {
+    reparse({ commit }, { $event, filename }) {
+      const delimiter = $event.target.value;
       commit('REPARSE_START')
-      Vue.axios.post('reparse', { filename, delimiter }).then(result => {
-        commit('REPARSE_SUCCESS', filename, result.data);
+      Vue.axios.post('reparse/', { filename, delimiter }).then(result => {
+        commit('REPARSE_SUCCESS', { filename, metadata: result.data });
         commit('SELECT', { filename, field: Object.keys(result.data.histogram)[0] })
       }).catch(error => {
         commit('REPARSE_FAIL', error);
@@ -122,7 +122,6 @@ export default new Vuex.Store({
     },
     selectFile({ commit, state }, { $event, file }) {
       $event.preventDefault();
-      console.log(file);
       commit('SELECT', { filename: file, field: Object.keys(state.files[file].histogram)[0] })
     }
   },

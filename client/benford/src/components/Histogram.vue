@@ -16,7 +16,7 @@
       </div>
       <div>
         <label>Don't see the correct fields? Change the file delimiter</label>
-        <select :value="delimiter">
+        <select :value="delimiter" @change="reparse({ $event, filename })">
           <option value="tab">Tabs</option>
           <option value="comma">Commas</option>
         </select>
@@ -69,7 +69,8 @@
     },
     methods: {
       ...mapActions([
-        'selectField'
+        'selectField',
+        'reparse'
       ])
     },
     components: {
