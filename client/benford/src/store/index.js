@@ -89,13 +89,17 @@ export default new Vuex.Store({
           'Content-Type': 'multipart/form-data'
         }
       }).then(result => {
-        commit('UPLOAD_SUCCESS', { filename: file.filename, metadata: result.data });
-        commit('SELECT', { filename: file.filename, field: Object.keys(result.data.histogram)[0] })
+        let filename = file.name;
+        let metadata = result.data;
+        let field = Object.keys(metadata.histogram)[0];
+        commit('UPLOAD_SUCCESS', { filename, metadata });
+        commit('SELECT', { filename, field })
       }).catch(error => {
+        console.log("ERROR", error);
         commit('UPLOAD_ERROR', error);
       });
     },
-    reparse({ commit }, filename, delimiter) {
+    reparse({ commit }, { filename, delimiter }) {
       commit('REPARSE_START')
       Vue.axios.post('reparse', { filename, delimiter }).then(result => {
         commit('REPARSE_SUCCESS', filename, result.data);
@@ -115,6 +119,11 @@ export default new Vuex.Store({
     },
     selectField({ commit, state }, $event) {
       commit('SELECT', { filename: state.selected.filename, field: $event.target.value })
+    },
+    selectFile({ commit, state }, { $event, file }) {
+      $event.preventDefault();
+      console.log(file);
+      commit('SELECT', { filename: file, field: Object.keys(state.files[file].histogram)[0] })
     }
   },
   modules: {

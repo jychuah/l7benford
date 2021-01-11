@@ -44,8 +44,8 @@
         }
       },
       ...mapState({
-        delimiter: state => state.selected && state.selected.delimiter,
-        filename: state => state.selected.filename,
+        delimiter: state => state.selected ? state.selected.delimiter : '',
+        filename: state => state.selected ? state.selected.filename : '',
         data: state => state.selected && state.files[state.selected.filename]
           ? [
               {

@@ -1,14 +1,14 @@
 <template>
   <div>
     <form enctype="multipart/form-data" novalidate>
-      <h1>Upload</h1>
+      <h3>Upload</h3>
       <div class="dropbox">
         <input type="file" :disabled="isUploading" @change="upload($event.target.files[0]);" class="input-file">
           <p v-if="isUploading">
-            Uploading {{ fileCount }} files...
+            Uploading files...
           </p>
           <p v-else>
-            Drag your file(s) here to begin<br> or click to browse
+            Click to browse
           </p>
       </div>
     </form>

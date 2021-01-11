@@ -1,19 +1,22 @@
 <template>
   <div id="app">
-    <file-upload />
     <histogram />
+    <file-list />
+    <file-upload />
   </div>
 </template>
 
 <script>
 import FileUpload from './components/FileUpload.vue';
 import Histogram from './components/Histogram.vue';
+import FileList from './components/FileList.vue';
 
 export default {
   name: 'App',
   components: {
     FileUpload,
-    Histogram
+    Histogram,
+    FileList
   },
   mounted() {
     this.$store.dispatch('load')

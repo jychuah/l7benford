@@ -101,7 +101,7 @@ def upload():
         conn.commit()
     except:
         raise Exception("DB Error")
-    return jsonify(histogram)
+    return jsonify(metadata)
 
 
 @app.route('/', methods=['GET'])
