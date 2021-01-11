@@ -19,5 +19,5 @@ def test_make_histograms(postgres):
     with open('./fixtures/histogram.csv', 'r') as csv:
         df = parse_file(csv.read(), delimiter=',')
         result = make_histograms(df)
-        assert result['column_1'][0] == 0.25
+        assert result['column_1'][1] == 0.375
         assert result['column_2'][9] == 0
