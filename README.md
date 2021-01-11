@@ -1,12 +1,31 @@
 # l7benford
 
+
+### Theory of Operation
+
+This application consists of:
+- A postgres container
+- A Vue.js client container
+- A Flask backend container
 ### Building and running production
 
 ```
 docker-compose up
 ```
 
+This will trigger instantiation of postgres with a fixture file that contains the contents
+of `census_2009b`, a build of the Vue.js client to a volume that the Flask server has mounted
+as static files, and startup of Flask. (Flask will wait for postgres to be ready.)
 Wait for the client to build, then browse [`http://localhost:8000`](http://localhost:8000)
+
+### Tests
+
+```
+./runtests.sh
+```
+
+Make sure the production server is up and running. In a separate terminal, run the
+`runtests.sh` script. This will run `pytest` on the server and `yarn test:unit` on the client.
 
 ### Building and running development server
 

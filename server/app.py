@@ -40,6 +40,11 @@ print("Connected to {postgres}".format(postgres=POSTGRES_HOST))
 
 
 def make_histograms(df):
+    """
+    Calculate a histogram by converting the contents of each column
+    to text, then find the distribution of each non-zero digit and
+    return it as a dictionary
+    """
     result = {}
     for column in df.columns:
         reduced = functools.reduce(lambda v, e: v + str(e), df[column].values, '')
@@ -62,6 +67,9 @@ def parse_file(contents, delimiter='\t'):
 
 @app.route('/api/files/', methods=["GET"])
 def files():
+    """
+    Get each file and its associated metadata, including histograms
+    """
     sql = "SELECT filename, metadata FROM benford;"
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -70,6 +78,9 @@ def files():
 
 
 def get_file(filename):
+    """
+    Retrieve the binary contents of a file from postgres
+    """
     sql = "SELECT contents FROM benford WHERE filename=%s;"
     cursor.execute(sql, [filename])
     result = cursor.fetchone()
@@ -78,6 +89,10 @@ def get_file(filename):
 
 @app.route("/api/reparse/", methods=["POST"])
 def reparse():
+    """
+    If the wrong delimiter was used for a file (by default tab)
+    attempt to reparse the file's contents with a different delimiter
+    """
     data = request.get_json()
     if 'filename' not in data or 'delimiter' not in data:
         raise Exception("Bad post")
@@ -100,6 +115,10 @@ def reparse():
 
 @app.route("/api/upload/", methods=["POST"])
 def upload():
+    """
+    Receive a file upload, and store its metadata including histogram
+    in postgres
+    """
     if not request.files or 'file' not in request.files:
         raise Exception("Bad Request")
     blob = request.files["file"]
@@ -126,5 +145,8 @@ def upload():
 
 @app.route('/', methods=['GET'])
 def index():
+    """
+    Render the Vue.js client
+    """
     return render_template("index.html")
 
