@@ -35,7 +35,10 @@ export default new Vuex.Store({
         status: "SUCCESS",
         error: null
       }
-      state.files[filename] = metadata;
+      state.files = {
+        ...state.files,
+        [filename]: metadata
+      }
     },
     UPLOAD_ERROR(state, error) {
       state.upload = {
