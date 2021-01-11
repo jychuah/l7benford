@@ -7,6 +7,7 @@ This application consists of:
 - A postgres container
 - A Vue.js client container
 - A Flask backend container
+
 ### Building and running production
 
 ```
@@ -33,4 +34,5 @@ Make sure the production server is up and running. In a separate terminal, run t
 docker-compose -f ./docker-compose.dev.yml up
 ```
 
-Then browse to [`http://localhost:8050`](http://localhost:8050). Yarn will run the Vue client at this port in development mode with automatic reloading. The API server will still run at `http://localhost:8000`, but the client will use `http://localhost:8000/api/` as the base URL for API calls.
+Then browse to [`http://localhost:8080`](http://localhost:8080). Yarn will run the Vue client at this port in development mode with automatic reloading. The API server will still run at `http://localhost:8000`
+with automatic reloading, but the client will use `http://localhost:8000/api/` as the base URL for API calls.
