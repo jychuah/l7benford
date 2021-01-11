@@ -108,11 +108,13 @@ export default new Vuex.Store({
       commit('LOAD_START')
       Vue.axios.get('files').then(result => {
         commit('LOAD_SUCCESS', result.data);
-        console.log("LOADED - DISPATCHING SELECT")
         commit('SELECT', { filename: 'census_2009b', field: '7_2009' })
       }).catch(error => {
         commit('LOAD_ERROR', error);
       });
+    },
+    selectField({ commit, state }, $event) {
+      commit('SELECT', { filename: state.selected.filename, field: $event.target.value })
     }
   },
   modules: {

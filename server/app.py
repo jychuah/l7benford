@@ -90,7 +90,7 @@ def upload():
             df = parse_file(contents.decode('utf-8'))
             histogram = make_histograms(df)
             metadata = {
-                'separator': 'tab',
+                'delimiter': 'tab',
                 'histogram': histogram
             }
         except:

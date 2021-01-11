@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Benford</h1>
+    <h1>Benford Distribution</h1>
     <div v-if="isLoading">
       <h3>
         Loading...
@@ -8,14 +8,21 @@
     </div>
     <div v-else>
       <h3>{{ filename }}</h3>
-      <vue-plotly :data="data" :layout="layout" />
       <div>
-        <select v-model="delimiter" @change="reparse(filename, delimiter)">
-          <option disabled value="">Please select one</option>
-          <option value="tab">Tab</option>
-          <option value="comma">Comma</option>
+        <label>Select a field</label>
+        <select :value="selectedField" @change="selectField($event)">
+          <option v-for="field in fields" :key="field">{{ field }}</option>
         </select>
       </div>
+      <div>
+        <label>Don't see the correct fields? Change the file delimiter</label>
+        <select :value="delimiter">
+          <option value="tab">Tabs</option>
+          <option value="comma">Commas</option>
+        </select>
+      </div>
+      <vue-plotly :data="data" :layout="layout" />
+
     </div>
 </div>
 </template>
@@ -37,7 +44,7 @@
         }
       },
       ...mapState({
-        delimiter: state => state.selected ? state.selected.delimiter : null,
+        delimiter: state => state.selected && state.selected.delimiter,
         filename: state => state.selected.filename,
         data: state => state.selected && state.files[state.selected.filename]
           ? [
@@ -55,19 +62,24 @@
               }
             ]
           : [],
+        selectedField: state => state.selected ? state.selected.field : null,
+        fields: state => state.selected ? Object.keys(state.selected.histogram): [],
         isLoading: state => state.loading
       })
     },
     methods: {
       ...mapActions([
-        'reparse'
+        'selectField'
       ])
     },
     components: {
-      VuePlotly
+      VuePlotly,
     }
   }
 </script>
 
-<style lang="scss">
+<style>
+  select {
+    margin-left: 1em;
+  }
 </style>
