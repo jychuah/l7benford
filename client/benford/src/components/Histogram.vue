@@ -10,13 +10,13 @@
       <h3>{{ filename }}</h3>
       <div>
         <label>Select a field</label>
-        <select :value="selectedField" @change="selectField($event)">
+        <select :value="selectedField" @change="selectField($event)" id="field-select">
           <option v-for="field in fields" :key="field">{{ field }}</option>
         </select>
       </div>
       <div>
         <label>Don't see the correct fields? Change the file delimiter</label>
-        <select :value="delimiter" @change="reparse({ $event, filename })">
+        <select :value="delimiter" @change="reparse({ $event, filename })" id="delimiter-select">
           <option value="tab">Tabs</option>
           <option value="comma">Commas</option>
         </select>
@@ -29,7 +29,7 @@
 
 <script>
   import { mapState, mapActions } from 'vuex';
-  import VuePlotly from '@statnett/vue-plotly'
+  import VuePlotly from '@statnett/vue-plotly';
 
   const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
