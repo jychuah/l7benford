@@ -34,6 +34,7 @@ def make_connection():
     cursor = conn.cursor()
     return conn, cursor
 
+
 conn, cursor = make_connection()
 print("Connected to {postgres}".format(postgres=POSTGRES_HOST))
 
