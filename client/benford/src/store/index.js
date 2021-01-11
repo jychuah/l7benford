@@ -12,27 +12,71 @@ Vue.axios.defaults.baseURL = process.env.NODE_ENV === 'development'
 
 export default new Vuex.Store({
   state: {
-    uploadResult: {
+    upload: {
       status: null,
-      data: null,
       error: null
-    }
+    },
+    files: {
+    },
+    selected: null,
+    error: null,
+    loading: true
   },
   mutations: {
     UPLOAD_START(state) {
-      state.status = "UPLOADING";
-      state.data = null;
-      state.error = null;
+      state.upload = {
+        status: "UPLOADING",
+        error: null
+      }
+      state.selected = null 
     },
-    UPLOAD_RESULT(state, data) {
-      state.status = "SUCCESS";
-      state.data = data;
-      state.error = null;
+    UPLOAD_SUCCESS(state, { filename, metadata }) {
+      state.upload = {
+        status: "SUCCESS",
+        error: null
+      }
+      state.files[filename] = metadata;
     },
     UPLOAD_ERROR(state, error) {
-      state.status = "ERROR";
-      state.data = null;
+      state.upload = {
+        status: "ERROR",
+        error
+      }
+    },
+    REPARSE_START(state) {
+      state.histogram = {
+        ...state.histogram,
+        loading: true,
+        error: null
+      }
+    },
+    REPARSE_SUCCESS(state, { filename, metadata }) {
+      state.files[filename] = metadata;
+    },
+    REPARSE_FAIL(state, error) {
+      state.selected = null,
+      state.error = error
+    },
+    LOAD_START(state) {
+      state.loading = true;
+      state.error = null;
+    },
+    LOAD_SUCCESS(state, files) {
+      state.files = files;
+      state.error = null;
+      state.loading = false;
+    },
+    LOAD_ERROR(state, error) {
+      state.files = {};
       state.error = error;
+      state.loading = false;
+    },
+    SELECT(state, { filename, field }) {
+      state.selected = {
+        filename,
+        field,
+        ...state.files[filename],
+      }
     }
   },
   actions: {
@@ -45,10 +89,30 @@ export default new Vuex.Store({
           'Content-Type': 'multipart/form-data'
         }
       }).then(result => {
-        commit('UPLOAD_RESULT', result.data)
+        commit('UPLOAD_SUCCESS', { filename: file.filename, metadata: result.data });
+        commit('SELECT', { filename: file.filename, field: Object.keys(result.data.histogram)[0] })
       }).catch(error => {
         commit('UPLOAD_ERROR', error);
-      })
+      });
+    },
+    reparse({ commit }, filename, delimiter) {
+      commit('REPARSE_START')
+      Vue.axios.post('reparse', { filename, delimiter }).then(result => {
+        commit('REPARSE_SUCCESS', filename, result.data);
+        commit('SELECT', { filename, field: Object.keys(result.data.histogram)[0] })
+      }).catch(error => {
+        commit('REPARSE_FAIL', error);
+      });
+    },
+    load({ commit }) {
+      commit('LOAD_START')
+      Vue.axios.get('files').then(result => {
+        commit('LOAD_SUCCESS', result.data);
+        console.log("LOADED - DISPATCHING SELECT")
+        commit('SELECT', { filename: 'census_2009b', field: '7_2009' })
+      }).catch(error => {
+        commit('LOAD_ERROR', error);
+      });
     }
   },
   modules: {

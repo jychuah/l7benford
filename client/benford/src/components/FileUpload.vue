@@ -21,9 +21,8 @@
   export default {
     name: 'file-upload',
     computed: mapState({
-      isUploading: state => state.uploadResult.status === 'UPLOADING',
-      error: state => state.uploadResult.error,
-      data: state => JSON.stringify(state.uploadResult.data)
+      isUploading: state => state.upload.status === 'UPLOADING',
+      error: state => state.upload.error,
     }),
     methods: {
       ...mapActions([

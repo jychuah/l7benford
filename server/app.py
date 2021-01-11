@@ -43,7 +43,7 @@ def make_histograms(df):
     for column in df.columns:
         reduced = functools.reduce(lambda v, e: v + str(e), df[column].values, '')
         histogram = {
-            digit: reduced.count(str(digit)) for digit in range(10) 
+            digit: reduced.count(str(digit)) for digit in range(1, 10) 
         }
         total = functools.reduce(lambda v, e: v + e, histogram.values(), 0)
         for digit in histogram.keys():
@@ -51,13 +51,31 @@ def make_histograms(df):
                 histogram[digit] = 0
             else:
                 histogram[digit] /= total
-        print("COLUMN", column)
         result[column] = histogram
     return result
 
 
 def parse_file(contents, delimiter='\t'):
     return pd.read_csv(io.StringIO(contents), delimiter=delimiter)
+
+
+@app.route('/api/files/', methods=["GET"])
+def files():
+    sql = "SELECT filename, metadata FROM benford;"
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    results = {row[0]: row[1] for row in rows}
+    return jsonify(results)
+
+
+@app.route("/api/reparse/", methods=["POST"])
+def reparse():
+    data = request.get_json()
+    if 'filename' not in data or 'delimiter' in data:
+        raise Exception("Bad post")
+    sql = "SELECT contents FROM benford WHERE filename=%s;"
+    cursor.execute(sql, [data['filename']])
+    result = cursor.fetchall()
 
 
 @app.route("/api/upload/", methods=["POST"])
@@ -68,15 +86,18 @@ def upload():
     try:
         filename = blob.filename
         contents = blob.stream.read()
-        print(type(contents))
         try:
             df = parse_file(contents.decode('utf-8'))
             histogram = make_histograms(df)
+            metadata = {
+                'separator': 'tab',
+                'histogram': histogram
+            }
         except:
             raise Exception("Parsing error")
         binary = psycopg2.Binary(contents).getquoted()
-        sql = "INSERT INTO benford (filename, contents, metadata) VALUES (%s, %s, %s)"
-        cursor.execute(sql, [filename, binary, json.dumps(histogram)])
+        sql = "INSERT INTO benford (filename, contents, metadata) VALUES (%s, %s, %s);"
+        cursor.execute(sql, [filename, binary, json.dumps(metadata)])
         conn.commit()
     except:
         raise Exception("DB Error")
